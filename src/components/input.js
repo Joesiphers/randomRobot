@@ -4,8 +4,8 @@ import { useState } from "react";
 const Inputbox=(props)=>{
     const [inputValue,setInputValue]=useState("");
     const Input=(e)=>{setInputValue(e.target.value)
-    props.onInput(e.target.value) };
-    const keyPress=(e)=>{if (e.key==='Enter'){setInputValue("")}};
+    };
+    const keyPress=(e)=>{if (e.key==='Enter'){props.onInput(e.target.value);setInputValue("")}};
     return <Wrapper> 
         <input type="text" 
             value={inputValue}

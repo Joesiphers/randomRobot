@@ -1,4 +1,4 @@
-const init=[0,1,2,3]
+const init=[0,0,0,0]
 const directionReducer=(state=init,action)=>{
     let newState=state;
     switch(action.type){

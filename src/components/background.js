@@ -1,16 +1,17 @@
 
 import styled from 'styled-components';
 
-function Backgound({children}) {
+function Backgound({size,children}) {
   let col=[];
-  for (let i=1; i<=5;i++){
+  //console.log("size-back",size)
+  for (let i=0; i<=size-1;i++){
     let row=[];
-    for (let r=1; r<=5;r++){
+    for (let r=0; r<=size-1;r++){
         row.push(<Unit id={`${i}${r}`} key={`${i}${r}`}
         ></Unit>)}  
     col.push(<Row key={i} id={`r${i}`}>{row}</Row>)
   }
-  return (<Wrapper > <Container>{children}{col}</Container>
+  return (<Wrapper > <Container style={{width: `${32*size}px`}} >{children}{col}</Container>
   </Wrapper>
       
   );
@@ -24,12 +25,12 @@ const Wrapper=styled.div`
   `;
 const Container=styled.div`
     position: relative;
-    width: 160px;
+    
 `;
 const Unit=styled.div`
   width:28px;
   height:28px;
-  border:1px solid lightgray ;
+  border:1px solid darkgray ;
   display:flex;
   justify-content: center;
   align-items: center;

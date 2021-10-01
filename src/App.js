@@ -1,12 +1,13 @@
-import {random, toArray } from "lodash";
-import React, { useState,useEffect, useRef } from 'react';
+import {random} from "lodash";
+import { checkPositionAvaliable } from "./components/utils/utils";
+import React, { useState, useRef } from 'react';
 import {useSelector,useDispatch} from 'react-redux';
 import './App.css';
 import Robot from './components/robot';
 import Background from './components/background';
 import Inputbox from './components/input';
 import styled from 'styled-components';
-function App(props) {
+function App() {
   const [reportMessage, setReportMessage]=useState([]);
   const countRef=useRef();
   const directionMap= ["NORTH","EAST","SOUTH","WEST"];
@@ -68,15 +69,27 @@ function App(props) {
 
 const createRobots=(r)=>{let list=[]; 
   for(let i=0;i<=r-1;i++){
+    let location=[];
+    //spread robots randomly;
+    const positioning=()=>{
+      do{  
+        let a=random(0,size-1);
+        let b=random(0,size-1);
+        if (checkPositionAvaliable([a,b],positions)){
+          return [a,b]
+        } 
+      }while( true)
+    }
+    location=positioning();
+/*   location=i<size?[0,i]:[1,i-size]; //spead robots on bottom*/
     list.push(
-  <Robot id={i} key={i}
-  // position= {i<size[0]?[0,i]:[1,i-size[0]]}
-   position= {i<size?[0,i]:[1,i-size]}
-  direction={0} 
-  command={command}
-  size={size}
-  readMessage={readMessage}
-  />);
+    <Robot id={i} key={i}
+      position={location}
+      direction={random(0,3)} 
+      command={command}
+      size={size}
+      readMessage={readMessage}
+    />);
    };
   return list;
 }
@@ -88,14 +101,15 @@ const createRobots=(r)=>{let list=[];
     const active=(id)=>{
         dispatch ({type:"active",data:id})
     }
-    let x=random(0,robots-1);
+    let x=random(0,6);
     let y=random(0,3);
-    let prevposition=positions[x];
   active(x);
     await delay (150)
     for (let i=0;i<=x;i++){
             for (let j=0;j<=y;j++){
               go(x);
+              }
+              for (let j=0;j<=y;j++){  
               await delay(50);
               turn(x)
             };//await delay(50);
@@ -135,10 +149,12 @@ return (
     <button onClick={randomTest} >oneTest</button>
     </div></div>
       <MessageBoard> 
-          <p>Test Starting <label ref={countRef}></label></p> 
-          <br/><div><p>command examples: </p> 
-          <p>size=6,7; robots=5;</p> 
+          <p>Test Round: <label ref={countRef}></label></p> 
+          <br/><div>
+          <p>command examples: </p> 
+          <p>size=6; robots=5;</p> 
           <p>click a robot to active;</p>
+          <p>place x,y,f or move,turn </p>
           </div> 
       </MessageBoard>
     </Container>
@@ -153,6 +169,8 @@ const MessageBoard=styled.div`
   text-align: start;
   top: 1rem;
   left: 6rem;
+  margin:0 0 0 1rem;
+
   `;
 const Wrapper=styled.div`
   margin-top:2rem ;
@@ -161,7 +179,7 @@ const Wrapper=styled.div`
 const Container=styled.div`
   display:flex;
   justify-content: space-around;
-
+margin:0 auto;
 text-align: start;
 top: 1rem;
 left: 6rem;
