@@ -1,100 +1,168 @@
-
-import React, { useState,useEffect } from 'react';
-import {useDispatch,useSelector} from 'react-redux';
+import {random, toArray } from "lodash";
+import React, { useState,useEffect, useRef } from 'react';
+import {useSelector,useDispatch} from 'react-redux';
 import './App.css';
-import { forEach } from 'lodash';
 import Robot from './components/robot';
 import Background from './components/background';
 import Inputbox from './components/input';
-import store from './components/store/store';
 import styled from 'styled-components';
-function App() {
-  const [position,setPosition]=useState([1,1]);
-  const [direction, setDirection]=useState(0);
+function App(props) {
   const [reportMessage, setReportMessage]=useState([]);
+  const countRef=useRef();
   const directionMap= ["NORTH","EAST","SOUTH","WEST"];
   const [command,setcommand]=useState("");
+  const [robots,setRobots]=useState(10);
+  const [size,setSize]=useState(10);
   const active=useSelector(state=>state.active);
   const positions=useSelector(state=>state.position)
-  const report=()=>{
-    //const positions=store.getState().position;
-    let msg=[]; 
-    console.log("report");
-    forEach (positions, (value,key) =>
-      msg.push (<p key={key}> Robot{key} in [{value}] </p>)
-    )
-  setReportMessage(msg);}
-  useEffect(() => {
-    console.log("place",direction,position)
-  },[position,direction])
-  useEffect(() => {
-    report()
-  },[positions])
-  const go=()=>{ setcommand([active,"go"]);
-    }
-  const turn=()=>{
-    setcommand([active,"turn"])
-  } 
-  const readCommand=(val)=>{
-    setcommand(val);
-  };
-  const sumit=(e)=>{
-    e.preventDefault();
-    parseCommand(command);
+ /*start to place*/
+  const place=(position,direction)=>{
+    setcommand([active,"place",position,direction])
   }
+  const go=(id)=>{
+    if ( typeof(id)==="number") {setcommand([id,"go"])}
+    else{setcommand([active,"go"])};
+  }
+  const turn=(id)=>{
+    if ( typeof(id)==="number") {setcommand([id,"turn"])}
+    else{setcommand([active,"turn"])};  } 
+  const readCommand=(val)=>{
+   parseCommand(val)
+  };
+  const readMessage=(id,msg)=>{
+    let message=reportMessage;
+    message[id]=msg;
+    setReportMessage(message)
+  }
+
 /* word command*/
   const parseCommand=(input)=>{
     let command=input.toString();
     command=command.replace(/(^\s*)|(\s*$)/ig,"");
    command=command.toUpperCase().split(" ");
- //   command=command;
-
     switch(command[0]){
         case "PLACE" :
-            const [x,y,f,n]=command[1].split(",");
+            const [x,y,f]=command[1].split(",");
             console.log(command[1],"robot");
-            setPosition([Number(x),Number(y)]);
+            let position=[Number(x),Number(y)];
             let dir=directionMap.findIndex((i)=>i===f);
-            console.log(dir,"find dir");
-            setDirection(dir);
+            place(position,dir);
             return ;
-        case "MOVE":go();  break;
-        case "TURN": turn(); break;
-        case "REPORT": report();break
-        default: console.log("not found");return
+        case "MOVE":go(active);  break;
+        case "TURN": turn(active); break;
+       // case "REPORT": report();break
+        case "REPORT": readMessage();break
+        case "ROBOTS": setRobots(Number(command[1]));break
+        default: 
+       command =command.toString().split("=");
+        command[0]==="ROBOTS" ||command[0]==="ROBOT" ?
+        setRobots(Number(command[1])):console.log("not found");
+        if(command[0]==="SIZE" ||command[0]==="SIZES"){
+        //  let s=command[1].split(","); 
+         // setSize([Number(s[0]),Number(s[1])])};
+         setSize(Number(command[1]))}
+         else{console.log("not found");}
+        return
     }
   };
 
-const Robots=()=>{let list=[]; 
-  for(let i=0;i<=3;i++){
+const createRobots=(r)=>{let list=[]; 
+  for(let i=0;i<=r-1;i++){
     list.push(
   <Robot id={i} key={i}
-  position={[0,i]} 
-  direction={directionMap[i]} 
+  // position= {i<size[0]?[0,i]:[1,i-size[0]]}
+   position= {i<size?[0,i]:[1,i-size]}
+  direction={0} 
   command={command}
-  />);  
-  };
-  return list;}
-
-  return (
-   <div className="center"> 
-      <Background>
-        {Robots()}
-      
+  size={size}
+  readMessage={readMessage}
+  />);
+   };
+  return list;
+}
+  const dispatch=useDispatch();
+  const delay=ms=>new Promise (res=>setTimeout(res,ms))
+  const randomTest=async ()=>{
+  //  console.log(x);
+ 
+    const active=(id)=>{
+        dispatch ({type:"active",data:id})
+    }
+    let x=random(0,robots-1);
+    let y=random(0,3);
+    let prevposition=positions[x];
+  active(x);
+    await delay (150)
+    for (let i=0;i<=x;i++){
+            for (let j=0;j<=y;j++){
+              go(x);
+              await delay(50);
+              turn(x)
+            };//await delay(50);
+       go(x);await delay(50)
+    }
+  }  
+     const Test=async()=>{
+    for (let i=0;i<=100;i++){
+      randomTest();
+      await delay (1000)
+      countRef.current.innerHTML=`${100-i}`
+      }
+    }  
+  
+return (
+  <Wrapper className="center"> 
+    <Container>
+       <MessageBoard>
+          <label>Robot Position Facing
+          {  reportMessage.map((i)=>{
+            return <p key={i.id}> 
+            Robot{i.id} {i.position} {directionMap[i.direction] } 
+            </p>})      }
+          </label>  
+        </MessageBoard>   
+      <div className="center">
+      <Background size={size}>
+        {createRobots(robots)}
       </Background>   
-      <MessageBoard><label>positions: {reportMessage}</label>  </MessageBoard>      
-      <form onSubmit={sumit }>   
-      <Inputbox onInput={readCommand} />
-      </form>
-    <button onClick={go} >Go</button>
+      <div>  <br/>
+    <label>please enter command</label>
+    <Inputbox onInput={readCommand} />
+
+    <button onClick={go } >Go</button>
     <button onClick={turn} >Turn</button>
-    </div>
+    <button onClick={Test} >Test</button>
+    <button onClick={randomTest} >oneTest</button>
+    </div></div>
+      <MessageBoard> 
+          <p>Test Starting <label ref={countRef}></label></p> 
+          <br/><div><p>command examples: </p> 
+          <p>size=6,7; robots=5;</p> 
+          <p>click a robot to active;</p>
+          </div> 
+      </MessageBoard>
+    </Container>
+
+</Wrapper>
   );
 }
 
 export default App;
 const MessageBoard=styled.div`
-  position: absolute;
+  width: 33%;
+  text-align: start;
   top: 1rem;
   left: 6rem;
   `;
+const Wrapper=styled.div`
+  margin-top:2rem ;
+  line-height: 0.5rem;
+  `;
+const Container=styled.div`
+  display:flex;
+  justify-content: space-around;
+
+text-align: start;
+top: 1rem;
+left: 6rem;
+`;
