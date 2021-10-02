@@ -12,14 +12,15 @@ const Robot=(props)=>{
     const [position,setPosition]=useState(positions[id]||props.position);
   //  const position=positions[id];
     const [col,row]=coordinate(size,position);
+   // console.log("id",id,position);
     const dir=useSelector(state=>state.direction);
     const [direction, setDirection]=useState(dir[id]||props.direction);
     const directionMap= ["NORTH","EAST","SOUTH","WEST"];
-
     useEffect(() => {
         props.readMessage(id,{id,position,direction});
         dispatch({type:"position",data:{id,position}});
-    }, [dispatch,position,id,direction])
+    }, [dispatch,position,id,direction]);
+
     useEffect(() => {
         if(active===id){setColor("lightgreen")}
         else{setColor("pink") }
@@ -56,9 +57,6 @@ const Robot=(props)=>{
         setPosition(command[2]);
         setDirection(command[3]);
      }
-    const report=()=>{
-        const msg=[position,direction]
-    }
     useEffect(() => {
       //      console.log(command)
         if (command[0]===id){
@@ -66,7 +64,7 @@ const Robot=(props)=>{
         case "place":place(command);break
         case "turn":turn();break
         case "go": go();break
-        case "report":report();break;
+//        case "report":report();break;
             default:return ;
     }}    
     }, [command,id])

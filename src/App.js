@@ -12,10 +12,25 @@ function App() {
   const countRef=useRef();
   const directionMap= ["NORTH","EAST","SOUTH","WEST"];
   const [command,setcommand]=useState("");
-  const [robots,setRobots]=useState(10);
-  const [size,setSize]=useState(10);
+  const [robots,setRobots]=useState(12);
+  const [size,setSize]=useState(12);
   const active=useSelector(state=>state.active);
   const positions=useSelector(state=>state.position)
+  const dispatch=useDispatch();
+  const delay=ms=>new Promise (res=>setTimeout(res,ms))
+  let locationPot=[];
+  for (let u=0;u<=size-1;u++){
+    for (let v=0;v<=size-1;v++){
+      locationPot.push([u,v])
+    }
+  }
+  let locationt =[];
+  for (let z=0;z<=robots;z++){
+    let ind=random(0,locationPot.length);
+    locationt.push(locationPot[ind]);
+    locationPot.splice(ind,1);
+//    console.log(locationt.length,locationPot.length,"length")
+  } 
  /*start to place*/
   const place=(position,direction)=>{
     setcommand([active,"place",position,direction])
@@ -37,10 +52,10 @@ function App() {
   }
 
 /* word command*/
-  const parseCommand=(input)=>{
+  const parseCommand= async (input)=>{
     let command=input.toString();
     command=command.replace(/(^\s*)|(\s*$)/ig,"");
-   command=command.toUpperCase().split(" ");
+    command=command.toUpperCase().split(" ");
     switch(command[0]){
         case "PLACE" :
             const [x,y,f]=command[1].split(",");
@@ -56,8 +71,11 @@ function App() {
         case "ROBOTS": setRobots(Number(command[1]));break
         default: 
        command =command.toString().split("=");
-        command[0]==="ROBOTS" ||command[0]==="ROBOT" ?
-        setRobots(Number(command[1])):console.log("not found");
+       if( command[0]==="ROBOTS" ||command[0]==="ROBOT" ) {
+          setRobots(0);
+         await delay(200); 
+        setRobots(Number(command[1]))
+      }
         if(command[0]==="SIZE" ||command[0]==="SIZES"){
         //  let s=command[1].split(","); 
          // setSize([Number(s[0]),Number(s[1])])};
@@ -65,24 +83,25 @@ function App() {
          else{console.log("not found");}
         return
     }
+
   };
 
-const createRobots=(r)=>{let list=[]; 
-  for(let i=0;i<=r-1;i++){
-    let location=[];
-    //spread robots randomly;
-    const positioning=()=>{
+const createRobots= (r)=>{
+  let list=[]; 
+      //spread robots randomly;
+    /* const positioning=()=>{   
       do{  
         let a=random(0,size-1);
         let b=random(0,size-1);
         if (checkPositionAvaliable([a,b],positions)){
           return [a,b]
         } 
-      }while( true)
-    }
-    location=positioning();
-/*   location=i<size?[0,i]:[1,i-size]; //spead robots on bottom*/
-    list.push(
+      }while( true) }; */
+    
+   for(let i=0;i<=r-1;i++){
+  // let locationu=i<size?[0,i]:[1,i-size]; //spead robots on bottom*/
+  let location=locationt[i] //positioning();  
+  list.push(
     <Robot id={i} key={i}
       position={location}
       direction={random(0,3)} 
@@ -93,38 +112,53 @@ const createRobots=(r)=>{let list=[];
    };
   return list;
 }
-  const dispatch=useDispatch();
-  const delay=ms=>new Promise (res=>setTimeout(res,ms))
+let bort=false;
   const randomTest=async ()=>{
-  //  console.log(x);
- 
     const active=(id)=>{
         dispatch ({type:"active",data:id})
     }
-    let x=random(0,6);
+    
+    let x=random(0,robots-1);
+    let z=random(0,8);
+    active(x);
+    await delay(50);
+    for (let i=0;i<=z;i++){
     let y=random(0,3);
-  active(x);
-    await delay (150)
-    for (let i=0;i<=x;i++){
-            for (let j=0;j<=y;j++){
-              go(x);
+       go(x);
+       await delay(30);      
+       for (let j=0;j<=y;j++){
+            turn(x) 
               }
-              for (let j=0;j<=y;j++){  
-              await delay(50);
-              turn(x)
-            };//await delay(50);
-       go(x);await delay(50)
+            for (let j=0;j<=y;j++){  
+              await delay(30);
+               go(x);
+            };await delay(20);
+      turn(x)
     }
   }  
-     const Test=async()=>{
+   const Test=async ()=>{
+     bort=false;
     for (let i=0;i<=100;i++){
-      randomTest();
-      await delay (1000)
-      countRef.current.innerHTML=`${100-i}`
+      countRef.current.innerHTML=`${100-i}`;
+      await delay (50);
+      console.log("running abort is", bort,i);
+      if (bort===false){
+ //       console.log("waiting");
+//        await delay (500);
+ //       console.log("working");
+      await  randomTest();
+  //      console.log("waiting");
+  //      await delay (500);
+      }else{console.log("abort");return }
       }
-    }  
+    }   
+ 
+  const abortTest=()=>{
+    bort=true;
+    console.log("bort is set to",bort)
+  }
   
-return (
+ return (
   <Wrapper className="center"> 
     <Container>
        <MessageBoard>
@@ -145,8 +179,9 @@ return (
 
     <button onClick={go } >Go</button>
     <button onClick={turn} >Turn</button>
-    <button onClick={Test} >Test</button>
-    <button onClick={randomTest} >oneTest</button>
+    <button onClick={Test} >100 Test</button>
+    <button onClick={randomTest} >1 Step Test</button>
+    <button onClick={abortTest} >Abort</button>
     </div></div>
       <MessageBoard> 
           <p>Test Round: <label ref={countRef}></label></p> 
