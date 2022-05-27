@@ -9,12 +9,12 @@ const Robot=(props)=>{
     const dispatch = useDispatch();
     const active=useSelector(state=>state.active);
     const positions=useSelector(state=>state.position);
-    const [position,setPosition]=useState(positions[id]||props.position);
-  //  const position=positions[id];
+    const [position,setPosition]=useState(props.position);
+  //  const position=positions[id];positions[id]||
     const [col,row]=coordinate(size,position);
    // console.log("id",id,position);
-    const dir=useSelector(state=>state.direction);
-    const [direction, setDirection]=useState(dir[id]||props.direction);
+   // const dir=useSelector(state=>state.direction);
+    const [direction, setDirection]=useState(props.direction);
     const directionMap= ["NORTH","EAST","SOUTH","WEST"];
     useEffect(() => {
         props.readMessage(id,{id,position,direction});

@@ -1,4 +1,4 @@
-import {random} from "lodash";
+import {random, set} from "lodash";
 import { checkPositionAvaliable } from "./components/utils/utils";
 import React, { useState, useRef } from 'react';
 import {useSelector,useDispatch} from 'react-redux';
@@ -10,12 +10,13 @@ import styled from 'styled-components';
 function App() {
   const [reportMessage, setReportMessage]=useState([]);
   const countRef=useRef();
+  const commandMsg=useRef();
   const directionMap= ["NORTH","EAST","SOUTH","WEST"];
   const [command,setcommand]=useState("");
   const [robots,setRobots]=useState(12);
   const [size,setSize]=useState(12);
   const active=useSelector(state=>state.active);
-  const positions=useSelector(state=>state.position)
+  //const positions=useSelector(state=>state.position)
   const dispatch=useDispatch();
   const delay=ms=>new Promise (res=>setTimeout(res,ms))
   let locationPot=[];
@@ -25,8 +26,8 @@ function App() {
     }
   }
   let locationt =[];
-  for (let z=0;z<=robots;z++){
-    let ind=random(0,locationPot.length);
+  for (let z=0;z<=robots-1;z++){
+    let ind=random(0,locationPot.length-1);
     locationt.push(locationPot[ind]);
     locationPot.splice(ind,1);
 //    console.log(locationt.length,locationPot.length,"length")
@@ -56,6 +57,8 @@ function App() {
     let command=input.toString();
     command=command.replace(/(^\s*)|(\s*$)/ig,"");
     command=command.toUpperCase().split(" ");
+    commandMsg.current.innerHTML=` `
+
     switch(command[0]){
         case "PLACE" :
             const [x,y,f]=command[1].split(",");
@@ -72,13 +75,20 @@ function App() {
         default: 
        command =command.toString().split("=");
        if( command[0]==="ROBOTS" ||command[0]==="ROBOT" ) {
-          setRobots(0);
-         await delay(200); 
-        setRobots(Number(command[1]))
+        setRobots(0);
+        await delay(50);
+        let robotNumber=Number(command[1]);
+        if (robotNumber>size*size){
+          commandMsg.current.innerHTML=` Message: fail, robot number over size`
+          ;return }
+        setRobots(robotNumber);
+        
       }
         if(command[0]==="SIZE" ||command[0]==="SIZES"){
         //  let s=command[1].split(","); 
          // setSize([Number(s[0]),Number(s[1])])};
+         setRobots(0);
+         await delay(50);
          setSize(Number(command[1]))}
          else{console.log("not found");}
         return
@@ -97,7 +107,7 @@ const createRobots= (r)=>{
           return [a,b]
         } 
       }while( true) }; */
-    
+  console.log(robots,size,"r",r,"createRobot")
    for(let i=0;i<=r-1;i++){
   // let locationu=i<size?[0,i]:[1,i-size]; //spead robots on bottom*/
   let location=locationt[i] //positioning();  
@@ -109,7 +119,8 @@ const createRobots= (r)=>{
       size={size}
       readMessage={readMessage}
     />);
-   };
+   console.log(i,location)};
+   
   return list;
 }
 let bort=false;
@@ -153,10 +164,10 @@ let bort=false;
       }
     }   
  
-  const abortTest=()=>{
+/*   const abortTest=()=>{
     bort=true;
     console.log("bort is set to",bort)
-  }
+  } */
   
  return (
   <Wrapper className="center"> 
@@ -174,14 +185,14 @@ let bort=false;
         {createRobots(robots)}
       </Background>   
       <div>  <br/>
-    <label>please enter command</label>
+    <label>please enter command. </label>
+    <label ref={commandMsg} style={{"color":"red"}}></label>
     <Inputbox onInput={readCommand} />
 
     <button onClick={go } >Go</button>
     <button onClick={turn} >Turn</button>
-    <button onClick={Test} >100 Test</button>
-    <button onClick={randomTest} >1 Step Test</button>
-    <button onClick={abortTest} >Abort</button>
+    <button onClick={Test} >Run 100 Step</button>
+    <button onClick={randomTest} >Single Step</button>
     </div></div>
       <MessageBoard> 
           <p>Test Round: <label ref={countRef}></label></p> 
@@ -189,7 +200,7 @@ let bort=false;
           <p>command examples: </p> 
           <p>size=6; robots=5;</p> 
           <p>click a robot to active;</p>
-          <p>place x,y,f or move,turn </p>
+          <p>place x,y,north or move,turn </p>
           </div> 
       </MessageBoard>
     </Container>
@@ -205,11 +216,10 @@ const MessageBoard=styled.div`
   top: 1rem;
   left: 6rem;
   margin:0 0 0 1rem;
-
+  & label p {line-height: 0.6rem;} 
   `;
 const Wrapper=styled.div`
   margin-top:2rem ;
-  line-height: 0.5rem;
   `;
 const Container=styled.div`
   display:flex;
