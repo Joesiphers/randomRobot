@@ -1,6 +1,6 @@
 you can try it on  
 
-randomRobot.web.app
+https://random-robot.web.app/
 
 build with ReactJS, functional components, hooks, redux,styled component CSS...
 
